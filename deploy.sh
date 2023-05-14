@@ -1,7 +1,7 @@
 #!/bin/bash
 
-CONTAINER_NAME=kaakroket-bot
-IMAGE_NAME=mat-ijs/kaaskoket-bot
+CONTAINER_NAME=kaaskroketbot
+IMAGE_NAME=mat-ijs/kaaskoketbot
 
 docker stop $CONTAINER_NAME
 docker container rm $CONTAINER_NAME
