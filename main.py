@@ -11,15 +11,13 @@ async def on_ready():
     print('Bot is ready.')
 
 class InviteButtons(discord.ui.View):
-    def __init__(self, inv: str):
-        global money
+    def __init__(self):
         super().__init__()
-        self.inv = inv
+        self.money = 0
 
-    @discord.ui.button(label='Invite Btn', style=discord.ButtonStyle.blurple)
-    async def inviteBtn(self, button: discord.ui.Button, interaction: discord.Interaction):
-        global money
-        money = money + 1
+    @discord.ui.button(label='+1', style=discord.ButtonStyle.blurple)
+    async def plusOne(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.money += 1
         await interaction.response.send_message(f"je hebt nu {money} euro", ephemeral=True)
 
 @bot.command()
