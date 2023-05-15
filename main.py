@@ -21,7 +21,7 @@ bot = commands.Bot(command_prefix='!', intents = discord.Intents.all())
 async def on_ready():
     print(f"Logged in as {bot.user.name}#{bot.user.discriminator}")
 #--------------------
-#all classes
+#all buttons
 #--------------------
 class counter(discord.ui.View):
     def __init__(self):
@@ -72,7 +72,7 @@ class zoozoo(discord.ui.View):
         else:
             await interaction.response.send_message(f"You already have a {choice}!", ephemeral=True)
 #--------------------
-#all commands
+#all commands using the buttons
 #--------------------
 @bot.command()
 async def money(ctx: commands.Context):
