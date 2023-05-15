@@ -42,7 +42,7 @@ class zoozoo(discord.ui.View):
     def __init__(self):
         super().__init__()
         self.zoo = {}
-        self.animals = ("monkey", "big penis")
+        self.animals = ("monkey", "horse", "dog", "cat", "bird", "fish", "snake", "lion", "tiger", "elephant", "bear", "panda", "penguin", "cow", "pig", "chicken", "sheep", "goat", "duck", "rabbit", "big penis")
 
     @discord.ui.button(label='zoo knop', style=discord.ButtonStyle.blurple)
     async def plusZoo(self, button: discord.ui.Button, interaction: discord.Interaction):
