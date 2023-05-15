@@ -4,6 +4,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import os
+import random
 #--------------------
 #load the bot token
 #--------------------
@@ -16,11 +17,13 @@ bot = commands.Bot(command_prefix='!', intents = discord.Intents.all())
 async def on_ready():
     print(f"Logged in as {bot.user.name}#{bot.user.discriminator}")
 #--------------------
-#the commands
+#all commands
 #--------------------
 class counter(discord.ui.View):
     def __init__(self):
         super().__init__()
+        self.zoo = {}
+        self.animals = {"monkey"}
         self.money = {}
 
     @discord.ui.button(label='+1', style=discord.ButtonStyle.blurple)
@@ -36,6 +39,20 @@ class counter(discord.ui.View):
             embed.set_field_at(index, name=interaction.user.name, value=self.money[interaction.user.id])
         await interaction.message.edit(embed=embed)
         await interaction.response.send_message(f"Je hebt nu {self.money[interaction.user.id]} euro", ephemeral=True)
+    
+    @discord.ui.button(label='zoo knop', style=discord.ButtonStyle.blurple)
+    async def plusOne(self, button: discord.ui.Button, interaction: discord.Interaction):
+        if interaction.user.id not in self.zoo.keys():
+            self.zoo[interaction.user.id] = 0
+        self.zoo[interaction.user.id] = random.choice(list(self.animals))
+        embed = interaction.message.embeds[0]
+        if not any(field.name == interaction.user.name for field in embed.fields):
+            embed.add_field(name=interaction.user.name, value=self.zoo[interaction.user.id])
+        else:
+            index = next(i for i, field in enumerate(embed.fields) if field.name == interaction.user.name)
+            embed.set_field_at(index, name=interaction.user.name, value=self.zoo[interaction.user.id])
+        await interaction.message.edit(embed=embed)
+        await interaction.response.send_message(f"dildo {self.zoo[interaction.user.id]} dier", ephemeral=True)
 
 @bot.command()
 async def geld(ctx: commands.Context):
