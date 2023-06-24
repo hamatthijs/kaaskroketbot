@@ -23,7 +23,6 @@ bot = commands.Bot(
 #load the bot token
 #--------------------
 load_dotenv()
-
 #--------------------
 #sends a message to the log when the bot is ready
 #--------------------
