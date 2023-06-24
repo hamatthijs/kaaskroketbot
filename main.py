@@ -11,19 +11,19 @@ from time import localtime
 #--------------------
 #all variables
 #--------------------
+dcc = docker.from_env()
+
 CONTAINER_NAME = "Paarse_Ballen_server"
 
-animal_count = {}
-
-dcc = docker.from_env()
-#--------------------
-#load the bot token
-#--------------------
-load_dotenv()
 bot = commands.Bot(
     command_prefix='!', intents = discord.Intents.all(),
     activity=discord.Activity(type=discord.ActivityType.watching, name="/help"),
 )
+#--------------------
+#load the bot token
+#--------------------
+load_dotenv()
+
 #--------------------
 #sends a message to the log when the bot is ready
 #--------------------
