@@ -11,8 +11,6 @@ from time import localtime
 #--------------------
 #all variables
 #--------------------
-load_dotenv()
-
 CONTAINER_NAME = "Paarse_Ballen_server"
 
 animal_count = {}
