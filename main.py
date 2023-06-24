@@ -106,7 +106,7 @@ async def start(interaction: discord.Interaction):
     Start the Minecraft server
     """
     user = interaction.user
-    if interaction.guild.id != 1072785326168346706 or interaction.guild.id != 1121713961801359392:
+    if interaction.guild.id not in (1072785326168346706, 1121713961801359392):
         await interaction.response.send_message("You can't use this command here!")
         return
     if user.id != 643009066557243402:
