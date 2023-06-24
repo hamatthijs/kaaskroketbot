@@ -1,21 +1,30 @@
 #all imports
 #--------------------
+import docker
+from docker.models.containers import Container
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import os
 import random
+from time import localtime
 #--------------------
 #all variables
 #--------------------
+load_dotenv()
+
+CONTAINER_NAME = "Paarse_Ballen_server"
+
 animal_count = {}
+
+dcc = docker.from_env()
 #--------------------
 #load the bot token
 #--------------------
 load_dotenv()
 bot = commands.Bot(
     command_prefix='!', intents = discord.Intents.all(),
-    activity=discord.Activity(type=discord.ActivityType.watching, name="/start"),
+    activity=discord.Activity(type=discord.ActivityType.watching, name="/help"),
 )
 #--------------------
 #sends a message to the log when the bot is ready
@@ -23,6 +32,8 @@ bot = commands.Bot(
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user.name}#{bot.user.discriminator}")
+#--------------------
+#the zoo game
 #--------------------
 #all buttons
 #--------------------
@@ -86,6 +97,83 @@ async def money(ctx: commands.Context):
 async def zoo(ctx):
     embed = discord.Embed(title="Leaderboard", description="Here is the leaderboard of the people with their animals", color=discord.Color.blurple())
     await ctx.send(f"Click on the button for zoo", embed=embed, view=zoozoo())
+#--------------------
+#the minecraft server start, stop and restart commands
+#--------------------
+@bot.slash_command(name="start")
+async def start(interaction: discord.Interaction):
+    """
+    Start the Minecraft server
+    """
+    user = interaction.user
+    role = discord.utils.get(interaction.guild.roles, name="admin")
+    if role not in user.roles:
+        if localtime().tm_hour < 6:
+            await interaction.response.send_message(
+                "You can't start the server at this time!"
+            )
+            return
+    container: Container = dcc.containers.get(CONTAINER_NAME)
+    current_status = container.status
+    if current_status == "exited" or current_status == "created":
+        await interaction.response.send_message("Starting server...")
+        container.start()
+    elif current_status == "running":
+        await interaction.response.send_message("Server is already running!")
+    elif current_status == "paused":
+        await interaction.response.send_message("Server is paused!")
+    elif current_status == "restarting":
+        await interaction.response.send_message("Server is restarting!")
+    elif current_status == "dead":
+        await interaction.response.send_message("Server is dead!")
+
+
+@bot.slash_command(name="stop")
+async def stop(interaction: discord.Interaction):
+    """
+    Stop the Minecraft server
+    """
+    container: Container = dcc.containers.get(CONTAINER_NAME)
+    current_status = container.status
+    user = interaction.user
+    role = discord.utils.get(interaction.guild.roles, name="admin")
+    if role in user.roles:
+        if current_status == "exited" or current_status == "created":
+            await interaction.response.send_message("Server is not running!")
+        elif current_status == "running":
+            await interaction.response.send_message("Stopping server...")
+            container.stop()
+        elif current_status == "paused":
+            await interaction.response.send_message("Server is paused!")
+        elif current_status == "restarting":
+            await interaction.response.send_message("Server is restarting!")
+        elif current_status == "dead":
+            await interaction.response.send_message("Server is dead!")
+    else:
+        await interaction.response.send_message("You don't have permission to do this!")
+
+@bot.slash_command(name="restart")
+async def restart(interaction: discord.Interaction):
+    """
+    Restart the Minecraft server
+    """
+    container: Container = dcc.containers.get(CONTAINER_NAME)
+    current_status = container.status
+    user = interaction.user
+    if user.id == 643009066557243402:
+        if current_status == "exited" or current_status == "created":
+            await interaction.response.send_message("Server is not running!")
+        elif current_status == "running":
+            await interaction.response.send_message("Restarting server...")
+            container.restart()
+        elif current_status == "paused":
+            await interaction.response.send_message("Server is paused!")
+        elif current_status == "restarting":
+            await interaction.response.send_message("Server is restarting!")
+        elif current_status == "dead":
+            await interaction.response.send_message("Server is dead!")
+    else:
+        await interaction.response.send_message("You don't have permission to do this!")
 #--------------------
 #runs the bot using the token loaded previously
 #--------------------
