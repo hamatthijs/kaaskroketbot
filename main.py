@@ -106,8 +106,7 @@ async def start(interaction: discord.Interaction):
     Start the Minecraft server
     """
     user = interaction.user
-    role = discord.utils.get(interaction.guild.roles, name="admin")
-    if role not in user.roles:
+    if user.id != 643009066557243402:
         if localtime().tm_hour < 6:
             await interaction.response.send_message(
                 "You can't start the server at this time!"
@@ -136,8 +135,7 @@ async def stop(interaction: discord.Interaction):
     container: Container = dcc.containers.get(CONTAINER_NAME)
     current_status = container.status
     user = interaction.user
-    role = discord.utils.get(interaction.guild.roles, name="admin")
-    if role in user.roles:
+    if user.id == 643009066557243402:
         if current_status == "exited" or current_status == "created":
             await interaction.response.send_message("Server is not running!")
         elif current_status == "running":
