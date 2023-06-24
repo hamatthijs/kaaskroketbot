@@ -13,7 +13,10 @@ animal_count = {}
 #load the bot token
 #--------------------
 load_dotenv()
-bot = commands.Bot(command_prefix='!', intents = discord.Intents.all())
+bot = commands.Bot(
+    command_prefix='!', intents = discord.Intents.all(),
+    activity=discord.Activity(type=discord.ActivityType.watching, name="/start"),
+)
 #--------------------
 #sends a message to the log when the bot is ready
 #--------------------
