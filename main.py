@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import os
 import random
 from time import localtime
+import asyncio
 #--------------------
 #all variables
 #--------------------
@@ -172,6 +173,18 @@ async def restart(interaction: discord.Interaction):
             await interaction.response.send_message("Server is dead!")
     else:
         await interaction.response.send_message("You don't have permission to do this!")
+# #--------------------
+# #turk command
+# #--------------------
+# @bot.slash_command(name="turk")
+# async def turk(interaction: discord.Interaction):
+#     """
+#     Turk
+#     """
+#     for i in range(10):
+#         channel = interaction.channel
+#         await channel.send("doe een stapje naar voren\ndoe een stapje terug\nga lekkar leggan\nen sla een turk op zijn rug")
+#         await asyncio.sleep(0.5)
 #--------------------
 #runs the bot using the token loaded previously
 #--------------------
