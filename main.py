@@ -9,6 +9,7 @@ import os
 import random
 from time import localtime
 import asyncio
+import json
 #--------------------
 #all variables
 #--------------------
@@ -20,6 +21,8 @@ bot = commands.Bot(
     command_prefix='!', intents = discord.Intents.all(),
     activity=discord.Activity(type=discord.ActivityType.watching, name="/help"),
 )
+
+muted_user = None
 #--------------------
 #load the bot token
 #--------------------
@@ -30,6 +33,12 @@ load_dotenv()
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user.name}#{bot.user.discriminator}")
+
+@bot.event
+async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+    if before.mute and not after.mute:
+        if member == muted_user:
+            await member.edit(mute=True)
 #--------------------
 #the zoo game
 #--------------------
@@ -67,6 +76,13 @@ class zoozoo(discord.ui.View):
             self.zoo[interaction.user.id] = []
         choice = random.choice(self.animals)
         if choice not in self.zoo[interaction.user.id]:
+            bestond = open("data/zoo.json", mode="w", encoding="utf-8")
+            jeeson = json.load(bestond)
+            if not jeeson[interaction.user.id].choices:
+                jeeson[interaction.user.id].choices = []
+            jeeson[interaction.user.id].choices.append(choice)
+            bestond.write(json.dumps(jeeson))
+            bestond.close()
             self.zoo[interaction.user.id].append(choice)
         else:
             already_chosen = True
@@ -173,18 +189,33 @@ async def restart(interaction: discord.Interaction):
             await interaction.response.send_message("Server is dead!")
     else:
         await interaction.response.send_message("You don't have permission to do this!")
-# #--------------------
-# #turk command
-# #--------------------
-# @bot.slash_command(name="turk")
-# async def turk(interaction: discord.Interaction):
-#     """
-#     Turk
-#     """
-#     for i in range(10):
-#         channel = interaction.channel
-#         await channel.send("doe een stapje naar voren\ndoe een stapje terug\nga lekkar leggan\nen sla een turk op zijn rug")
-#         await asyncio.sleep(0.5)
+#--------------------
+#mute command
+#--------------------
+@bot.slash_command(name="mute")
+async def mute(interaction: discord.Interaction, user: discord.Member):
+    """
+    Mute a user
+    """
+    if interaction.user.id == 643009066557243402:
+        global muted_user
+        muted_user = user
+        await user.edit(mute=True)
+        await interaction.response.send_message(f"{user} has been muted!")
+    else:
+        await interaction.response.send_message("You don't have permission to do this!")
+@bot.slash_command(name="unmute")
+async def unmute(interaction: discord.Interaction, user: discord.Member):
+    """
+    Unmute a user
+    """
+    if interaction.user.id == 643009066557243402:
+        global muted_user
+        muted_user = None
+        await user.edit(mute=False)
+        await interaction.response.send_message(f"{user} has been unmuted!")
+    else:
+        await interaction.response.send_message("You don't have permission to do this!")
 #--------------------
 #runs the bot using the token loaded previously
 #--------------------
