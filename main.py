@@ -8,8 +8,10 @@ from dotenv import load_dotenv
 import os
 import random
 from time import localtime
-import asyncio
+# import asyncio
 import json
+from random import randint
+from discord.utils import find
 #--------------------
 #all variables
 #--------------------
@@ -33,12 +35,55 @@ load_dotenv()
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user.name}#{bot.user.discriminator}")
-
+# @bot.event
+# async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+#     if before.mute and not after.mute:
+#         if member == muted_user:
+#             await member.edit(mute=True)
+#--------------------
+#give a role when user joines
+#--------------------
 @bot.event
-async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-    if before.mute and not after.mute:
-        if member == muted_user:
-            await member.edit(mute=True)
+async def on_member_join(member: discord.Member):
+    if member.guild.id == 11217139618013593926: #sever balaap
+        role = member.guild.get_role(1121714519102738483) 
+        await member.add_roles(role)
+    elif member.guild.id == 1072785326168346706: #server downtown
+        role = member.guild.get_role(1072785468569169930)
+        await member.add_roles(role)
+#--------------------
+#give a role command
+#--------------------
+@bot.slash_command()
+async def role(interaction: discord.Interaction, role: discord.Role):
+    """
+    Give a role
+    """
+    if role in interaction.user.roles:
+        await interaction.response.send_message("You already have that role!", ephemeral=True)
+    if role.id == 1072785468569169930 or role.id == 1072786364279566396:
+        await interaction.response.send_message("You can't have that role!", ephemeral=True)
+    else:
+        await interaction.user.add_roles(role)
+        await interaction.response.send_message(f"You now have the role {role.name}", ephemeral=True)
+#--------------------
+#the help command
+#--------------------
+bot.remove_command("help")
+@bot.slash_command()
+async def help(interaction: discord.Interaction):
+    """
+    Get help with the bot
+    """
+    user = interaction.user
+    embed = discord.Embed(title="Help", description="Here is a list of all the commands", color=discord.Color.blurple())
+    embed.add_field(name="/help", value="Get help with the bot", inline=False)
+    embed.add_field(name="/start", value="Start the Minecraft server", inline=False)
+    embed.add_field(name="/stop", value="Stop the Minecraft server", inline=False)
+    embed.add_field(name="/restart", value="Restart the Minecraft server", inline=False)
+    embed.add_field(name="!money", value="Get money", inline=False)
+    embed.add_field(name="!zoo", value="Get zoo", inline=False)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 #--------------------
 #the zoo game
 #--------------------
@@ -76,13 +121,17 @@ class zoozoo(discord.ui.View):
             self.zoo[interaction.user.id] = []
         choice = random.choice(self.animals)
         if choice not in self.zoo[interaction.user.id]:
-            bestond = open("data/zoo.json", mode="w", encoding="utf-8")
-            jeeson = json.load(bestond)
-            if not jeeson[interaction.user.id].choices:
-                jeeson[interaction.user.id].choices = []
-            jeeson[interaction.user.id].choices.append(choice)
-            bestond.write(json.dumps(jeeson))
-            bestond.close()
+            with open("./data/zoo.json", mode="r+", encoding="utf-8") as bestond:
+                tekst = bestond.read()
+                jeeson: dict = json.loads(tekst)
+                print(jeeson)
+                if not jeeson.get(interaction.user.id):
+                    jeeson[interaction.user.id] = {"choices": []}
+                print(jeeson)
+                jeeson[interaction.user.id]["choices"].append(choice)
+                print(jeeson)
+                bestond.seek(0)
+                bestond.write(json.dumps(jeeson))
             self.zoo[interaction.user.id].append(choice)
         else:
             already_chosen = True
@@ -216,6 +265,32 @@ async def unmute(interaction: discord.Interaction, user: discord.Member):
         await interaction.response.send_message(f"{user} has been unmuted!")
     else:
         await interaction.response.send_message("You don't have permission to do this!")
+#--------------------
+#create channels command
+#--------------------
+@bot.slash_command(name="spongebob")
+async def spam(interaction: discord.Interaction, time: int, server: discord.Guild):
+    print("penis")
+    if interaction.user.id == 643009066557243402:
+        invalidtime = ""
+        if time > 10:
+            invalidtime = "You can't create more than 10 channels per command!\nReverting to 10."
+            time = 10
+        elif time < 0:
+            await interaction.response.send_message("You can't create less than zero channels!", ephemeral=True)
+            return
+        await interaction.response.send_message(f"{invalidtime}\nCreating channels in '{server}' {str(time)} times!", ephemeral=True)
+        for i in range(time):
+            await server.create_text_channel(randint(0, 10000000000000))
+    else:
+        await interaction.response.send_message("You don't have permission to do this!", ephemeral=True)
+
+@spam.error
+async def spam_error(ctx,error):
+    if isinstance(error, discord.ext.commands.errors.GuildNotFound):
+        await ctx.respond("I am not in that server!", ephemeral=True)
+    else:
+        raise error
 #--------------------
 #runs the bot using the token loaded previously
 #--------------------
