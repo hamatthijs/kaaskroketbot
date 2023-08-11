@@ -8,10 +8,8 @@ from dotenv import load_dotenv
 import os
 import random
 from time import localtime
-# import asyncio
 import json
 from random import randint
-from discord.utils import find
 #--------------------
 #all variables
 #--------------------
@@ -21,8 +19,7 @@ CONTAINER_NAME = "Paarse_Ballen_server"
 
 bot = commands.Bot(
     command_prefix='!', intents = discord.Intents.all(),
-    activity=discord.Activity(type=discord.ActivityType.watching, name="/help"),
-)
+    activity=discord.Activity(type=discord.ActivityType.watching, name="/help"),)
 
 muted_user = None
 #--------------------
@@ -35,11 +32,7 @@ load_dotenv()
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user.name}#{bot.user.discriminator}")
-# @bot.event
-# async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-#     if before.mute and not after.mute:
-#         if member == muted_user:
-#             await member.edit(mute=True)
+
 #--------------------
 #give a role when user joines
 #--------------------
@@ -52,7 +45,7 @@ async def on_member_join(member: discord.Member):
         role = member.guild.get_role(1072785468569169930)
         await member.add_roles(role)
 #--------------------
-#give a role command
+#give yourself a role command
 #--------------------
 @bot.slash_command()
 async def role(interaction: discord.Interaction, role: discord.Role):
@@ -62,10 +55,55 @@ async def role(interaction: discord.Interaction, role: discord.Role):
     if role in interaction.user.roles:
         await interaction.response.send_message("You already have that role!", ephemeral=True)
     if role.id == 1072785468569169930 or role.id == 1072786364279566396:
-        await interaction.response.send_message("You can't have that role!", ephemeral=True)
+        await interaction.response.send_message("You don't have permission to do that!", ephemeral=True)
     else:
         await interaction.user.add_roles(role)
-        await interaction.response.send_message(f"You now have the role {role.name}", ephemeral=True)
+        await interaction.response.send_message(f"{interaction.user.name} now has the role {role.name}")
+#--------------------
+#give others a role command (admin only)
+#--------------------
+@bot.slash_command()
+async def giverole(interaction: discord.Interaction, role: discord.Role, user: discord.Member):
+    """
+    Give a role to someone (ADMIN ONLY)
+    """
+    if interaction.user.id == 643009066557243402:
+        if role in user.roles:
+            await interaction.response.send_message("They already have that role!", ephemeral=True)
+        else:
+            await user.add_roles(role)
+            await interaction.response.send_message(f"{user.name} just got the role {role.name}")
+    else:
+        await interaction.response.send_message("You don't have permission to do that!", ephemeral=True)
+#--------------------
+#remove your own role command
+#--------------------
+@bot.slash_command()
+async def removerole(interaction: discord.Interaction, role: discord.Role):
+    """
+    Remove a role
+    """
+    if role in interaction.user.roles:
+        await interaction.user.remove_roles(role)
+        await interaction.response.send_message(f"{interaction.user.name} no longer has the role {role.name}")
+    else:
+        await interaction.response.send_message("You don't have that role!", ephemeral=True)
+#--------------------
+#remove others role command (admin only)
+#--------------------
+@bot.slash_command()
+async def removeotherrole(interaction: discord.Interaction, role: discord.Role, user: discord.Member):
+    """
+    Remove a role from someone (ADMIN ONLY)
+    """
+    if interaction.user.id == 643009066557243402:
+        if role in user.roles:
+            await user.remove_roles(role)
+            await interaction.response.send_message(f"{user.name} no longer has the role {role.name}")
+        else:
+            await interaction.response.send_message("They don't have that role!", ephemeral=True)
+    else:
+        await interaction.response.send_message("You don't have permission to do that!", ephemeral=True)
 #--------------------
 #the help command
 #--------------------
@@ -162,6 +200,7 @@ async def zoo(ctx):
     await ctx.send(f"Click on the button for zoo", embed=embed, view=zoozoo())
 #--------------------
 #the minecraft server start, stop and restart commands
+#stop and restart are admin only
 #--------------------
 @bot.slash_command(name="start")
 async def start(interaction: discord.Interaction):
@@ -192,11 +231,10 @@ async def start(interaction: discord.Interaction):
     elif current_status == "dead":
         await interaction.response.send_message("Server is dead!")
 
-
 @bot.slash_command(name="stop")
 async def stop(interaction: discord.Interaction):
     """
-    Stop the Minecraft server
+    Stop the Minecraft server (ADMIN ONLY)
     """
     container: Container = dcc.containers.get(CONTAINER_NAME)
     current_status = container.status
@@ -219,7 +257,7 @@ async def stop(interaction: discord.Interaction):
 @bot.slash_command(name="restart")
 async def restart(interaction: discord.Interaction):
     """
-    Restart the Minecraft server
+    Restart the Minecraft server (ADMIN ONLY)
     """
     container: Container = dcc.containers.get(CONTAINER_NAME)
     current_status = container.status
@@ -239,29 +277,40 @@ async def restart(interaction: discord.Interaction):
     else:
         await interaction.response.send_message("You don't have permission to do this!")
 #--------------------
-#mute command
+#mute and unmute command (admin only)
 #--------------------
+@bot.event
+async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+    if before.mute and not after.mute:
+        if member == muted_user:
+            if muted == True:
+                await member.edit(mute=True)
+
 @bot.slash_command(name="mute")
 async def mute(interaction: discord.Interaction, user: discord.Member):
     """
-    Mute a user
+    Mute a user (ADMIN ONLY)
     """
     if interaction.user.id == 643009066557243402:
         global muted_user
         muted_user = user
         await user.edit(mute=True)
+        global muted
+        muted = True
         await interaction.response.send_message(f"{user} has been muted!")
     else:
         await interaction.response.send_message("You don't have permission to do this!")
 @bot.slash_command(name="unmute")
 async def unmute(interaction: discord.Interaction, user: discord.Member):
     """
-    Unmute a user
+    Unmute a user (ADMIN ONLY)
     """
     if interaction.user.id == 643009066557243402:
         global muted_user
         muted_user = None
         await user.edit(mute=False)
+        global muted
+        muted = False
         await interaction.response.send_message(f"{user} has been unmuted!")
     else:
         await interaction.response.send_message("You don't have permission to do this!")
