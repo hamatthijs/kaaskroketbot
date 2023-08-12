@@ -65,7 +65,7 @@ async def role(interaction: discord.Interaction, role: discord.Role):
 @bot.slash_command()
 async def giverole(interaction: discord.Interaction, role: discord.Role, user: discord.Member):
     """
-    Give a role to someone (ADMIN ONLY)
+    Give a role to someone 🛑ADMIN ONLY🛑
     """
     if interaction.user.id == 643009066557243402:
         if role in user.roles:
@@ -94,7 +94,7 @@ async def removerole(interaction: discord.Interaction, role: discord.Role):
 @bot.slash_command()
 async def removeotherrole(interaction: discord.Interaction, role: discord.Role, user: discord.Member):
     """
-    Remove a role from someone (ADMIN ONLY)
+    Remove a role from someone 🛑ADMIN ONLY🛑
     """
     if interaction.user.id == 643009066557243402:
         if role in user.roles:
@@ -102,6 +102,45 @@ async def removeotherrole(interaction: discord.Interaction, role: discord.Role, 
             await interaction.response.send_message(f"{user.name} no longer has the role {role.name}")
         else:
             await interaction.response.send_message("They don't have that role!", ephemeral=True)
+    else:
+        await interaction.response.send_message("You don't have permission to do that!", ephemeral=True)
+#--------------------
+#ban command (admin only)
+#--------------------
+@bot.slash_command()
+async def ban(interaction: discord.Interaction, user: discord.Member, reason: str):
+    """
+    Ban someone 🛑ADMIN ONLY🛑
+    """
+    if interaction.user.id == 643009066557243402:
+        await user.ban(reason=reason)
+        await interaction.response.send_message(f"{user.name} has been banned for {reason}")
+    else:
+        await interaction.response.send_message("You don't have permission to do that!", ephemeral=True)
+#--------------------
+#unban command (admin only)
+#--------------------
+@bot.slash_command()
+async def unban(interaction: discord.Interaction, user: discord.User, reason: str):
+    """
+    Unban someone 🛑ADMIN ONLY🛑
+    """
+    if interaction.user.id == 643009066557243402:
+        await user.unban(reason=reason)
+        await interaction.response.send_message(f"{user.name} has been unbanned for {reason}")
+    else:
+        await interaction.response.send_message("You don't have permission to do that!", ephemeral=True)
+#--------------------
+#kick command (admin only)
+#--------------------
+@bot.slash_command()
+async def kick(interaction: discord.Interaction, user: discord.Member, reason: str):
+    """
+    Kick someone 🛑ADMIN ONLY🛑
+    """
+    if interaction.user.id == 643009066557243402:
+        await user.kick(reason=reason)
+        await interaction.response.send_message(f"{user.name} has been kicked for {reason}")
     else:
         await interaction.response.send_message("You don't have permission to do that!", ephemeral=True)
 #--------------------
@@ -234,7 +273,7 @@ async def start(interaction: discord.Interaction):
 @bot.slash_command(name="stop")
 async def stop(interaction: discord.Interaction):
     """
-    Stop the Minecraft server (ADMIN ONLY)
+    Stop the Minecraft server 🛑ADMIN ONLY🛑
     """
     container: Container = dcc.containers.get(CONTAINER_NAME)
     current_status = container.status
@@ -257,7 +296,7 @@ async def stop(interaction: discord.Interaction):
 @bot.slash_command(name="restart")
 async def restart(interaction: discord.Interaction):
     """
-    Restart the Minecraft server (ADMIN ONLY)
+    Restart the Minecraft server 🛑ADMIN ONLY🛑
     """
     container: Container = dcc.containers.get(CONTAINER_NAME)
     current_status = container.status
@@ -289,7 +328,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
 @bot.slash_command(name="mute")
 async def mute(interaction: discord.Interaction, user: discord.Member):
     """
-    Mute a user (ADMIN ONLY)
+    Mute a user 🛑ADMIN ONLY🛑
     """
     if interaction.user.id == 643009066557243402:
         global muted_user
@@ -303,7 +342,7 @@ async def mute(interaction: discord.Interaction, user: discord.Member):
 @bot.slash_command(name="unmute")
 async def unmute(interaction: discord.Interaction, user: discord.Member):
     """
-    Unmute a user (ADMIN ONLY)
+    Unmute a user 🛑ADMIN ONLY🛑
     """
     if interaction.user.id == 643009066557243402:
         global muted_user
@@ -318,18 +357,18 @@ async def unmute(interaction: discord.Interaction, user: discord.Member):
 #create channels command
 #--------------------
 @bot.slash_command(name="spongebob")
-async def spam(interaction: discord.Interaction, time: int, server: discord.Guild):
+async def spam(interaction: discord.Interaction, amount: int, server: discord.Guild):
     print("penis")
     if interaction.user.id == 643009066557243402:
         invalidtime = ""
-        if time > 10:
+        if amount > 10:
             invalidtime = "You can't create more than 10 channels per command!\nReverting to 10."
-            time = 10
-        elif time < 0:
+            amount = 10
+        elif amount < 0:
             await interaction.response.send_message("You can't create less than zero channels!", ephemeral=True)
             return
-        await interaction.response.send_message(f"{invalidtime}\nCreating channels in '{server}' {str(time)} times!", ephemeral=True)
-        for i in range(time):
+        await interaction.response.send_message(f"{invalidtime}\nCreating channels in '{server}' {str(amount)} times!", ephemeral=True)
+        for i in range(amount):
             await server.create_text_channel(randint(0, 10000000000000))
     else:
         await interaction.response.send_message("You don't have permission to do this!", ephemeral=True)
