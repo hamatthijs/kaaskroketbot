@@ -224,7 +224,7 @@ class counter(discord.ui.View):
             self.money[interaction.user.id] = 0
         self.money[interaction.user.id] += (1 + (len(animal_count[interaction.user.id]) if interaction.user.id in animal_count.keys() else 0))
         embed = interaction.message.embeds[0]
-        if not any(field.name == interaction.user.name for field in embed.fields):
+        if all(field.name != interaction.user.name for field in embed.fields):
             embed.add_field(name=interaction.user.name, value=self.money[interaction.user.id])
         else:
             index = next(i for i, field in enumerate(embed.fields) if field.name == interaction.user.name)
@@ -269,7 +269,7 @@ class zoozoo(discord.ui.View):
         global animal_count
         animal_count = zooData
         embed = interaction.message.embeds[0]
-        if not any(field.name == interaction.user.name for field in embed.fields):
+        if all(field.name != interaction.user.name for field in embed.fields):
             embed.add_field(name=interaction.user.name, value=", ".join(zooData[interaction.user.id]))
         else:
             index = next(i for i, field in enumerate(embed.fields) if field.name == interaction.user.name)
@@ -285,7 +285,7 @@ class zoozoo(discord.ui.View):
 @bot.command()
 async def money(ctx: commands.Context):
     embed = discord.Embed(title="Leaderboard", description="Here is the leaderboard of the people with the most money", color=discord.Color.blurple())
-    await ctx.send(f"Click on button for money", embed=embed, view=counter())
+    await ctx.send("Click on button for money", embed=embed, view=counter())
 
 @bot.command()
 async def zoo(ctx):
@@ -295,7 +295,7 @@ async def zoo(ctx):
         tekst = bestond.read()
         tekst = "{}" if tekst == "" else tekst
         print(tekst)
-        
+
         # Pre-poulate the embed
         jeeson: dict = json.loads(tekst)
         zooData = jeeson
@@ -303,7 +303,7 @@ async def zoo(ctx):
         for user_id, user_data in jeeson.items():
             username = next((member.name for member in ctx.guild.members if member.id == int(user_id)), "Unknown")
             embed.add_field(name=username, value=", ".join(user_data["choices"]))
-    await ctx.send(f"Click on the button for zoo", embed=embed, view=zoozoo())
+    await ctx.send("Click on the button for zoo", embed=embed, view=zoozoo())
 #--------------------
 #the minecraft server start, stop and restart commands
 #stop and restart are admin only
@@ -325,7 +325,7 @@ async def start(interaction: discord.Interaction):
             return
     container: Container = dcc.containers.get(CONTAINER_NAME)
     current_status = container.status
-    if current_status == "exited" or current_status == "created":
+    if current_status in ["exited", "created"]:
         await interaction.response.send_message("Starting server...")
         container.start()
     elif current_status == "running":
@@ -343,10 +343,10 @@ async def stop(interaction: discord.Interaction):
     Stop the Minecraft server 🛑ADMIN ONLY🛑
     """
     container: Container = dcc.containers.get(CONTAINER_NAME)
-    current_status = container.status
     user = interaction.user
     if user.id == 643009066557243402:
-        if current_status == "exited" or current_status == "created":
+        current_status = container.status
+        if current_status in ["exited", "created"]:
             await interaction.response.send_message("Server is not running!")
         elif current_status == "running":
             await interaction.response.send_message("Stopping server...")
@@ -366,10 +366,10 @@ async def restart(interaction: discord.Interaction):
     Restart the Minecraft server 🛑ADMIN ONLY🛑
     """
     container: Container = dcc.containers.get(CONTAINER_NAME)
-    current_status = container.status
     user = interaction.user
     if user.id == 643009066557243402:
-        if current_status == "exited" or current_status == "created":
+        current_status = container.status
+        if current_status in ["exited", "created"]:
             await interaction.response.send_message("Server is not running!")
         elif current_status == "running":
             await interaction.response.send_message("Restarting server...")
@@ -434,8 +434,11 @@ async def spam(interaction: discord.Interaction, amount: int, server: discord.Gu
         elif amount < 0:
             await interaction.response.send_message("You can't create less than zero channels!", ephemeral=True)
             return
-        await interaction.response.send_message(f"{invalidtime}\nCreating channels in '{server}' {str(amount)} times!", ephemeral=True)
-        for i in range(amount):
+        await interaction.response.send_message(
+            f"{invalidtime}\nCreating channels in '{server}' {amount} times!",
+            ephemeral=True,
+        )
+        for _ in range(amount):
             await server.create_text_channel("spongebob")
     else:
         await interaction.response.send_message("You don't have permission to do this!", ephemeral=True)
