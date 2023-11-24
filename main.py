@@ -19,7 +19,10 @@ CONTAINER_NAME = "Paarse_Ballen_server"
 
 bot = commands.Bot(
     command_prefix='!', intents = discord.Intents.all(),
-    activity=discord.Activity(type=discord.ActivityType.watching, name="/help"),)
+    activity=discord.Activity(type=discord.ActivityType.watching, name="/help")
+)
+
+zooData = {}
 
 muted_user = None
 #--------------------
@@ -32,7 +35,69 @@ load_dotenv()
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user.name}#{bot.user.discriminator}")
-
+#--------------------
+#the help command
+#--------------------
+bot.remove_command("help")
+@bot.slash_command()
+async def help(interaction: discord.Interaction):
+    """
+    Get help with the bot
+    """
+    user = interaction.user
+    embed = discord.Embed(title="Help", description="Here is a list of all the commands", color=discord.Color.blurple())
+    embed.add_field(name="/help", value="Get help with the bot", inline=False)
+    embed.add_field(name="/start", value="Start the Minecraft server", inline=False)
+    embed.add_field(name="/stop", value="Stop the Minecraft server", inline=False)
+    embed.add_field(name="/restart", value="Restart the Minecraft server", inline=False)
+    embed.add_field(name="!money", value="Get money", inline=False)
+    embed.add_field(name="!zoo", value="Get zoo", inline=False)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+#--------------------
+#the ping command
+#--------------------
+@bot.slash_command()
+async def ping(interaction: discord.Interaction):
+    """
+    Get the bot's ping
+    """
+    await interaction.response.send_message(f"Pong! {round(bot.latency * 1000)}ms")
+#--------------------
+#the commands command
+#--------------------
+@bot.slash_command()
+async def commands(interaction: discord.Interaction):
+    """
+    Get the commands
+    """
+    embed = discord.Embed(title="Commands", description="Here is a list of all the commands", color=discord.Color.blurple())
+    embed.add_field(name="/help", value="Get help with the bot", inline=False)
+    embed.add_field(name="/start", value="Start the Minecraft server", inline=False)
+    embed.add_field(name="/stop", value="Stop the Minecraft server", inline=False)
+    embed.add_field(name="/restart", value="Restart the Minecraft server", inline=False)
+    embed.add_field(name="!money", value="Get money", inline=False)
+    embed.add_field(name="!zoo", value="Get zoo", inline=False)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+#--------------------
+#admin commands command
+#--------------------
+@bot.slash_command()
+async def admin(interaction: discord.Interaction):
+    """
+    Get the admin commands
+    """
+    embed = discord.Embed(title="Admin commands", description="Here is a list of all the admin commands", color=discord.Color.blurple())
+    embed.add_field(name="/mute", value="Mute a user", inline=False)
+    embed.add_field(name="/unmute", value="Unmute a user", inline=False)
+    embed.add_field(name="/ban", value="Ban a user", inline=False)
+    embed.add_field(name="/unban", value="Unban a user", inline=False)
+    embed.add_field(name="/kick", value="Kick a user", inline=False)
+    embed.add_field(name="/giverole", value="Give a user a role", inline=False)
+    embed.add_field(name="/removeotherrole", value="Remove a role from a user", inline=False)
+    embed.add_field(name="/stop", value="Stop the Minecraft server", inline=False)
+    embed.add_field(name="/restart", value="Restart the Minecraft server", inline=False)
+    embed.add_field(name="/spongebob", value="Create channels", inline=False)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 #--------------------
 #give a role when user joines
 #--------------------
@@ -144,24 +209,6 @@ async def kick(interaction: discord.Interaction, user: discord.Member, reason: s
     else:
         await interaction.response.send_message("You don't have permission to do that!", ephemeral=True)
 #--------------------
-#the help command
-#--------------------
-bot.remove_command("help")
-@bot.slash_command()
-async def help(interaction: discord.Interaction):
-    """
-    Get help with the bot
-    """
-    user = interaction.user
-    embed = discord.Embed(title="Help", description="Here is a list of all the commands", color=discord.Color.blurple())
-    embed.add_field(name="/help", value="Get help with the bot", inline=False)
-    embed.add_field(name="/start", value="Start the Minecraft server", inline=False)
-    embed.add_field(name="/stop", value="Stop the Minecraft server", inline=False)
-    embed.add_field(name="/restart", value="Restart the Minecraft server", inline=False)
-    embed.add_field(name="!money", value="Get money", inline=False)
-    embed.add_field(name="!zoo", value="Get zoo", inline=False)
-    await interaction.response.send_message(embed=embed, ephemeral=True)
-#--------------------
 #the zoo game
 #--------------------
 #all buttons
@@ -177,7 +224,7 @@ class counter(discord.ui.View):
             self.money[interaction.user.id] = 0
         self.money[interaction.user.id] += (1 + (len(animal_count[interaction.user.id]) if interaction.user.id in animal_count.keys() else 0))
         embed = interaction.message.embeds[0]
-        if all(field.name != interaction.user.name for field in embed.fields):
+        if not any(field.name == interaction.user.name for field in embed.fields):
             embed.add_field(name=interaction.user.name, value=self.money[interaction.user.id])
         else:
             index = next(i for i, field in enumerate(embed.fields) if field.name == interaction.user.name)
@@ -188,55 +235,75 @@ class counter(discord.ui.View):
 class zoozoo(discord.ui.View):
     def __init__(self):
         super().__init__()
-        self.zoo = {}
         self.animals = ("monkey", "horse", "dog", "cat", "bird", "fish", "snake", "lion", "tiger", "elephant", "bear", "panda", "penguin", "cow", "pig", "chicken", "sheep", "goat", "duck", "rabbit", "big penis")
 
     @discord.ui.button(label='zoo button', style=discord.ButtonStyle.blurple)
     async def plusZoo(self, button: discord.ui.Button, interaction: discord.Interaction):
         already_chosen = False
-        if interaction.user.id not in self.zoo.keys():
-            self.zoo[interaction.user.id] = []
+        if interaction.user.id not in zooData.keys():
+            zooData[interaction.user.id] = []
         choice = random.choice(self.animals)
-        if choice not in self.zoo[interaction.user.id]:
+        if choice not in zooData[interaction.user.id]:
             with open("./data/zoo.json", mode="r+", encoding="utf-8") as bestond:
+                print("---")
                 tekst = bestond.read()
+                tekst = "{}" if tekst == "" else tekst
                 jeeson: dict = json.loads(tekst)
-                print(jeeson)
-                if not jeeson.get(interaction.user.id):
-                    jeeson[interaction.user.id] = {"choices": []}
-                print(jeeson)
-                jeeson[interaction.user.id]["choices"].append(choice)
-                print(jeeson)
+                print(f"Huidig: {jeeson}")
+
+                id = str(interaction.user.id)
+                user_has_entry = jeeson.get(id) is not None
+                print(f"User has entry: {user_has_entry}")
+                if not user_has_entry:
+                    jeeson[id] = {"choices": []}
+                    print(f"User has no entry, adding: {jeeson}")
+
+                jeeson[id]["choices"].append(choice)
+                print(f"Nieuw: {jeeson}")
                 bestond.seek(0)
                 bestond.write(json.dumps(jeeson))
-            self.zoo[interaction.user.id].append(choice)
+                print("---")
+            zooData[interaction.user.id].append(choice)
         else:
             already_chosen = True
         global animal_count
-        animal_count = self.zoo
+        animal_count = zooData
         embed = interaction.message.embeds[0]
-        if all(field.name != interaction.user.name for field in embed.fields):
-            embed.add_field(name=interaction.user.name, value=", ".join(self.zoo[interaction.user.id]))
+        if not any(field.name == interaction.user.name for field in embed.fields):
+            embed.add_field(name=interaction.user.name, value=", ".join(zooData[interaction.user.id]))
         else:
             index = next(i for i, field in enumerate(embed.fields) if field.name == interaction.user.name)
-            embed.set_field_at(index, name=interaction.user.name, value=", ".join(self.zoo[interaction.user.id]))
+            embed.set_field_at(index, name=interaction.user.name, value=", ".join(zooData[interaction.user.id]))
         if not already_chosen:
             await interaction.message.edit(embed=embed)
-            await interaction.response.send_message(f"You now have a {choice}!", ephemeral=True)
+            await interaction.response.send_message(f"You now have a {choice}!", ephemeral=True, delete_after=5)
         else:
-            await interaction.response.send_message(f"You already have a {choice}!", ephemeral=True)
+            await interaction.response.send_message(f"You already have a {choice}!", ephemeral=True, delete_after=5)
 #--------------------
 #all commands using the buttons
 #--------------------
 @bot.command()
 async def money(ctx: commands.Context):
     embed = discord.Embed(title="Leaderboard", description="Here is the leaderboard of the people with the most money", color=discord.Color.blurple())
-    await ctx.send("Click on button for money", embed=embed, view=counter())
+    await ctx.send(f"Click on button for money", embed=embed, view=counter())
 
 @bot.command()
 async def zoo(ctx):
     embed = discord.Embed(title="Leaderboard", description="Here is the leaderboard of the people with their animals", color=discord.Color.blurple())
-    await ctx.send("Click on the button for zoo", embed=embed, view=zoozoo())
+    with open("./data/zoo.json", mode="r+", encoding="utf-8") as bestond:
+        print("---")
+        tekst = bestond.read()
+        tekst = "{}" if tekst == "" else tekst
+        print(tekst)
+        
+        # Pre-poulate the embed
+        jeeson: dict = json.loads(tekst)
+        zooData = jeeson
+        print(jeeson)
+        for user_id, user_data in jeeson.items():
+            username = next((member.name for member in ctx.guild.members if member.id == int(user_id)), "Unknown")
+            embed.add_field(name=username, value=", ".join(user_data["choices"]))
+    await ctx.send(f"Click on the button for zoo", embed=embed, view=zoozoo())
 #--------------------
 #the minecraft server start, stop and restart commands
 #stop and restart are admin only
@@ -258,7 +325,7 @@ async def start(interaction: discord.Interaction):
             return
     container: Container = dcc.containers.get(CONTAINER_NAME)
     current_status = container.status
-    if current_status in ["exited", "created"]:
+    if current_status == "exited" or current_status == "created":
         await interaction.response.send_message("Starting server...")
         container.start()
     elif current_status == "running":
@@ -276,10 +343,10 @@ async def stop(interaction: discord.Interaction):
     Stop the Minecraft server 🛑ADMIN ONLY🛑
     """
     container: Container = dcc.containers.get(CONTAINER_NAME)
+    current_status = container.status
     user = interaction.user
     if user.id == 643009066557243402:
-        current_status = container.status
-        if current_status in ["exited", "created"]:
+        if current_status == "exited" or current_status == "created":
             await interaction.response.send_message("Server is not running!")
         elif current_status == "running":
             await interaction.response.send_message("Stopping server...")
@@ -299,10 +366,10 @@ async def restart(interaction: discord.Interaction):
     Restart the Minecraft server 🛑ADMIN ONLY🛑
     """
     container: Container = dcc.containers.get(CONTAINER_NAME)
+    current_status = container.status
     user = interaction.user
     if user.id == 643009066557243402:
-        current_status = container.status
-        if current_status in ["exited", "created"]:
+        if current_status == "exited" or current_status == "created":
             await interaction.response.send_message("Server is not running!")
         elif current_status == "running":
             await interaction.response.send_message("Restarting server...")
@@ -314,6 +381,7 @@ async def restart(interaction: discord.Interaction):
         elif current_status == "dead":
             await interaction.response.send_message("Server is dead!")
     else:
+
         await interaction.response.send_message("You don't have permission to do this!")
 #--------------------
 #mute and unmute command (admin only)
@@ -324,7 +392,6 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
         if member == muted_user:
             if muted == True:
                 await member.edit(mute=True)
-
 @bot.slash_command(name="mute")
 async def mute(interaction: discord.Interaction, user: discord.Member):
     """
@@ -367,15 +434,11 @@ async def spam(interaction: discord.Interaction, amount: int, server: discord.Gu
         elif amount < 0:
             await interaction.response.send_message("You can't create less than zero channels!", ephemeral=True)
             return
-        await interaction.response.send_message(
-            f"{invalidtime}\nCreating channels in '{server}' {amount} times!",
-            ephemeral=True,
-        )
-        for _ in range(amount):
-            await server.create_text_channel(randint(0, 10000000000000))
+        await interaction.response.send_message(f"{invalidtime}\nCreating channels in '{server}' {str(amount)} times!", ephemeral=True)
+        for i in range(amount):
+            await server.create_text_channel("spongebob")
     else:
         await interaction.response.send_message("You don't have permission to do this!", ephemeral=True)
-
 @spam.error
 async def spam_error(ctx,error):
     if isinstance(error, discord.ext.commands.errors.GuildNotFound):
