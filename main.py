@@ -39,8 +39,8 @@ async def on_ready():
 #the help command
 #--------------------
 bot.remove_command("help")
-@bot.slash_command()
-async def help(interaction: discord.Interaction):
+@bot.slash_command(name="help")
+async def _help(interaction: discord.Interaction):
     """
     Get help with the bot
     """
@@ -65,8 +65,8 @@ async def ping(interaction: discord.Interaction):
 #--------------------
 #the commands command
 #--------------------
-@bot.slash_command()
-async def commands(interaction: discord.Interaction):
+@bot.slash_command(name="commands")
+async def _commands(interaction: discord.Interaction):
     """
     Get the commands
     """
