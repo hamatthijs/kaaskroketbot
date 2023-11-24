@@ -22,7 +22,7 @@ bot = commands.Bot(
     activity=discord.Activity(type=discord.ActivityType.watching, name="/help")
 )
 
-zooData = {}
+dataOpened = False
 
 muted_user = None
 #--------------------
@@ -213,24 +213,36 @@ async def kick(interaction: discord.Interaction, user: discord.Member, reason: s
 #--------------------
 #all buttons
 #--------------------
-class counter(discord.ui.View):
+class money_button(discord.ui.View):
     def __init__(self):
         super().__init__()
-        self.money = {}
-
+    
     @discord.ui.button(label='+1', style=discord.ButtonStyle.blurple)
     async def plusOne(self, button: discord.ui.Button, interaction: discord.Interaction):
-        if interaction.user.id not in self.money.keys():
-            self.money[interaction.user.id] = 0
-        self.money[interaction.user.id] += (1 + (len(animal_count[interaction.user.id]) if interaction.user.id in animal_count.keys() else 0))
-        embed = interaction.message.embeds[0]
-        if all(field.name != interaction.user.name for field in embed.fields):
-            embed.add_field(name=interaction.user.name, value=self.money[interaction.user.id])
-        else:
-            index = next(i for i, field in enumerate(embed.fields) if field.name == interaction.user.name)
-            embed.set_field_at(index, name=interaction.user.name, value=self.money[interaction.user.id])
-        await interaction.message.edit(embed=embed)
-        await interaction.response.send_message(f"you now have {self.money[interaction.user.id]} money", ephemeral=True)
+        global dataOpened
+        if dataOpened:
+            await interaction.response.send_message("hold the fuck up", ephemeral=True, delete_after=1)
+            return
+        id = str(interaction.user.id)
+        with open("./data/data.json", mode="r+", encoding="utf-8") as file:
+            dataOpened = True
+            data = json.loads(file.read())
+            
+            # Initialize with empty arrays if user has no data
+            if not data.get(id):
+                data[id] = {"money": 0, "animals": []}
+
+            data[id]["money"] += 1 + len(data[id]["animals"])
+            
+            embed = discord.Embed(title="Leaderboard", description="Here is the leaderboard of the people with the most money", color=discord.Color.blurple())
+            for id, udata in data.items():
+                embed.add_field(name=interaction.guild.get_member(int(id)).name, value=udata["money"])
+            await interaction.message.edit(embed=embed)
+            await interaction.response.send_message(f"You now have {data[id]['money']} money!", ephemeral=True, delete_after=0.0000001)
+            
+            file.seek(0)
+            file.write(json.dumps(data))
+        dataOpened = False
 
 class zoozoo(discord.ui.View):
     def __init__(self):
@@ -239,71 +251,60 @@ class zoozoo(discord.ui.View):
 
     @discord.ui.button(label='zoo button', style=discord.ButtonStyle.blurple)
     async def plusZoo(self, button: discord.ui.Button, interaction: discord.Interaction):
-        already_chosen = False
-        if interaction.user.id not in zooData.keys():
-            zooData[interaction.user.id] = []
+        global dataOpened
+        if dataOpened:
+            await interaction.response.send_message("hold the fuck up", ephemeral=True, delete_after=1)
+            return
+        id = str(interaction.user.id)
         choice = random.choice(self.animals)
-        if choice not in zooData[interaction.user.id]:
-            with open("./data/zoo.json", mode="r+", encoding="utf-8") as bestond:
-                print("---")
-                tekst = bestond.read()
-                tekst = "{}" if tekst == "" else tekst
-                jeeson: dict = json.loads(tekst)
-                print(f"Huidig: {jeeson}")
+        with open("./data/data.json", mode="r+", encoding="utf-8") as file:
+            dataOpened = True
+            data = json.loads(file.read())
+            
+            # Initialize with empty arrays if user has no data
+            if not data.get(id):
+                data[id] = {"money": 0, "animals": []}
 
-                id = str(interaction.user.id)
-                user_has_entry = jeeson.get(id) is not None
-                print(f"User has entry: {user_has_entry}")
-                if not user_has_entry:
-                    jeeson[id] = {"choices": []}
-                    print(f"User has no entry, adding: {jeeson}")
+            if choice not in data[id]["animals"]:
+                data[id]["animals"].append(choice)
 
-                jeeson[id]["choices"].append(choice)
-                print(f"Nieuw: {jeeson}")
-                bestond.seek(0)
-                bestond.write(json.dumps(jeeson))
-                print("---")
-            zooData[interaction.user.id].append(choice)
-        else:
-            already_chosen = True
-        global animal_count
-        animal_count = zooData
-        embed = interaction.message.embeds[0]
-        if all(field.name != interaction.user.name for field in embed.fields):
-            embed.add_field(name=interaction.user.name, value=", ".join(zooData[interaction.user.id]))
-        else:
-            index = next(i for i, field in enumerate(embed.fields) if field.name == interaction.user.name)
-            embed.set_field_at(index, name=interaction.user.name, value=", ".join(zooData[interaction.user.id]))
-        if not already_chosen:
-            await interaction.message.edit(embed=embed)
-            await interaction.response.send_message(f"You now have a {choice}!", ephemeral=True, delete_after=5)
-        else:
-            await interaction.response.send_message(f"You already have a {choice}!", ephemeral=True, delete_after=5)
+                embed = discord.Embed(title="Leaderboard", description="Here is the leaderboard of the people with their animals", color=discord.Color.blurple())
+                for id, udata in data.items():
+                    embed.add_field(name=interaction.guild.get_member(int(id)).name, value=", ".join(udata["animals"]))
+                await interaction.message.edit(embed=embed)
+                await interaction.response.send_message(f"You now have a {choice}!", ephemeral=True, delete_after=5)
+            else:
+                await interaction.response.send_message(f"You got a {choice}, but you already have it!", ephemeral=True, delete_after=5)
+
+            file.seek(0)
+            file.write(json.dumps(data))
+        dataOpened = False
+        
 #--------------------
 #all commands using the buttons
 #--------------------
 @bot.command()
 async def money(ctx: commands.Context):
     embed = discord.Embed(title="Leaderboard", description="Here is the leaderboard of the people with the most money", color=discord.Color.blurple())
-    await ctx.send("Click on button for money", embed=embed, view=counter())
+    with open("data/data.json", mode="r+", encoding="utf-8") as file:
+        data = json.loads(file.read())
+        for id, udata in data.items():
+            if udata["money"] == 0 or not int(id) in [member.id for member in ctx.guild.members]:
+                continue
+            embed.add_field(name=ctx.guild.get_member(int(id)).name, value=udata["money"])
+    await ctx.send("Click on button for money", embed=embed, view=money_button())
 
 @bot.command()
-async def zoo(ctx):
+async def zoo(ctx: commands.Context):
     embed = discord.Embed(title="Leaderboard", description="Here is the leaderboard of the people with their animals", color=discord.Color.blurple())
-    with open("./data/zoo.json", mode="r+", encoding="utf-8") as bestond:
-        print("---")
-        tekst = bestond.read()
-        tekst = "{}" if tekst == "" else tekst
-        print(tekst)
-
-        # Pre-poulate the embed
-        jeeson: dict = json.loads(tekst)
-        zooData = jeeson
-        print(jeeson)
-        for user_id, user_data in jeeson.items():
-            username = next((member.name for member in ctx.guild.members if member.id == int(user_id)), "Unknown")
-            embed.add_field(name=username, value=", ".join(user_data["choices"]))
+    with open("data/data.json", mode="r+", encoding="utf-8") as file:
+        data = json.loads(file.read())
+        for id, udata in data.items():
+            if len(udata["animals"]) == 0 or not int(id) in [member.id for member in ctx.guild.members]:
+                continue
+            embed.add_field(name=ctx.guild.get_member(int(id)).name, value=", ".join(udata["animals"]))
     await ctx.send("Click on the button for zoo", embed=embed, view=zoozoo())
+
 #--------------------
 #the minecraft server start, stop and restart commands
 #stop and restart are admin only
