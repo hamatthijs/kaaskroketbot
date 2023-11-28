@@ -9,7 +9,7 @@ import os
 import random
 from time import localtime
 import json
-from random import randint
+import bisect
 #--------------------
 #all variables
 #--------------------
@@ -244,7 +244,7 @@ class money_button(discord.ui.View):
             file.write(json.dumps(data))
         dataOpened = False
 
-class zoozoo(discord.ui.View):
+class zoo_button(discord.ui.View):
     def __init__(self):
         super().__init__()
         self.animals = ("monkey", "horse", "dog", "cat", "bird", "fish", "snake", "lion", "tiger", "elephant", "bear", "panda", "penguin", "cow", "pig", "chicken", "sheep", "goat", "duck", "rabbit", "big penis")
@@ -280,6 +280,14 @@ class zoozoo(discord.ui.View):
             file.write(json.dumps(data))
         dataOpened = False
         
+def check_level(xp):
+    levels = {"1": 100, "2": 200, "3": 300, "4": 400, "5": 500, "6": 600, "7": 700, "8": 800, "9": 900, "10": 1000, "11": 1100, "12": 1200, "13": 1300, "14": 1400, "15": 1500, "16": 1600, "17": 1700, "18": 1800, "19": 1900, "20": 2000, "21": 2100, "22": 2200, "23": 2300, "24": 2400, "25": 2500, "26": 2600, "27": 2700, "28": 2800, "29": 2900, "30": 3000, "31": 3100, "32": 3200, "33": 3300, "34": 3400, "35": 3500, "36": 3600, "37": 3700, "38": 3800, "39": 3900, "40": 4000, "41": 4100, "42": 4200, "43": 4300, "44": 4400, "45": 4500, "46": 4600, "47": 4700, "48": 4800, "49": 4900, "50": 5000, "51": 5100, "52": 5200, "53": 5300, "54": 5400, "55": 5500, "56": 5600, "57": 5700, "58": 5800, "59": 5900, "60": 6000, "61": 6100, "62": 6200, "63": 6300, "64": 6400, "65": 6500, "66": 6600, "67": 6700, "68": 6800, "69": 6900, "70": 7000, "71": 7100, "72": 7200, "73": 7300,}
+    xp_thresholds = list(levels.values())
+    levels = list(levels.keys())
+    
+    index = bisect.bisect(xp_thresholds, xp)
+    
+
 #--------------------
 #all commands using the buttons
 #--------------------
@@ -303,8 +311,19 @@ async def zoo(ctx: commands.Context):
             if len(udata["animals"]) == 0 or not int(id) in [member.id for member in ctx.guild.members]:
                 continue
             embed.add_field(name=ctx.guild.get_member(int(id)).name, value=", ".join(udata["animals"]))
-    await ctx.send("Click on the button for zoo", embed=embed, view=zoozoo())
-
+    await ctx.send("Click on the button for zoo", embed=embed, view=zoo_button())
+#--------------------
+#the level system
+#--------------------
+@bot.command()
+async def level(ctx: commands.Context):
+    embed = discord.Embed(title="Leaderboard", description="Here is everyones level", color=discord.Color.blurple())
+    with open("data/levels.json", mode="r+", encoding="utf-8") as file:
+        data = json.loads(file.read())
+        for id, udata in data.items():
+            if udata["level"] == 0 or not int(id) in [member.id for member in ctx.guild.members]:
+                continue
+            embed.add_field(name=ctx.guild.get_member(int(id)).name, value=udata["level"])
 #--------------------
 #the minecraft server start, stop and restart commands
 #stop and restart are admin only
