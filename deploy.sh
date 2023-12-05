@@ -9,3 +9,4 @@ docker image rm $IMAGE_NAME
 
 docker build -t $IMAGE_NAME /home/pi/bots/kaaskroketbot
 docker run -d --name $CONTAINER_NAME -v /var/run/docker.sock:/var/run/docker.sock -v kaaskroketbot_data:/usr/src/app/data --env TZ="Europe/Amsterdam" --restart unless-stopped $IMAGE_NAME
+docker cp $CONTAINER_NAME:/usr/src/app/data /home/pi/bots/kaaskroketbot
